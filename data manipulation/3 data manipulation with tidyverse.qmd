@@ -1,0 +1,882 @@
+---
+title: "Data manipulation with tidyverse"
+
+
+execute:
+  warning: false
+  error: false
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-fold: show
+    code-tools: true
+    number-sections: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9"
+---
+
+The tidyverse is an opinionated collection of R packages designed for data science. All packages share an underlying design philosophy, grammar, and data structures.
+
+![](images/ggplot_hive.jpg){width="600"}
+
+dplyr is a grammar of data manipulation, providing a consistent set of verbs that help you solve the most common data manipulation challenges.
+
+![](images/logo.png){width="231"}
+
+# load package
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+packageVersion("dplyr")
+```
+
+```{r}
+data(mtcars)
+small_mtcars = mtcars %>% select(cyl, mpg,hp) %>% head()
+
+```
+
+make rowname into one column
+
+```{r}
+library(tibble)
+small_mtcars=rownames_to_column(small_mtcars, var="car_name")
+
+small_mtcars %>% head
+```
+
+# Data manipulation
+
+## select column
+
+## get column names
+
+```{r}
+names(small_mtcars)
+```
+
+## select by name
+
+```{r}
+mtcars %>% select(cyl, mpg,hp) 
+```
+
+## select columns by name match with 'p'
+
+## select columns by index
+
+### select first and 3rd columns
+
+### select first to 3rd columns
+
+## drop column
+
+```{r}
+small_mtcars %>% select(-cyl)
+```
+
+## Renaming column
+
+```{r}
+small_mtcars %>%rename(new_cyl=cyl)
+```
+
+## Create column
+
+### Mutate
+
+```{r}
+small_mtcars %>%mutate(new_cyl=cyl+1)
+```
+
+### if else
+
+```{r}
+small_mtcars %>%mutate(new_cly_group=if_else(cyl>6,'big','small'))
+```
+
+### case when
+
+```{r}
+small_mtcars %>%mutate(cly_group=case_when(
+    cyl > 6 ~ "very big",
+    cyl > 4 ~ "big",
+    TRUE ~ "other",
+  ))
+```
+
+### Transmute,create column and only keep this column
+
+```{r}
+small_mtcars %>%transmute(new_cyl=cyl+1)
+```
+
+## Filter rows
+
+```{r}
+small_mtcars %>%filter(cyl>5)
+```
+
+### Filters with AND conditions
+
+```{r}
+small_mtcars %>%filter(cyl>5,mpg>20)
+```
+
+### Filters with OR conditions
+
+```{r}
+small_mtcars %>%filter(cyl>5|mpg>20)
+```
+
+### filter row with index
+
+#### 5th rows
+
+```{r}
+small_mtcars %>% slice(5)
+```
+
+#### 1 and 5h rows
+
+```{r}
+small_mtcars %>% slice(1:5)
+```
+
+#### get ramdon 5 rows
+
+```{r}
+small_mtcars %>% sample_n(5)
+```
+
+## Append
+
+### append by row
+
+```{r}
+small_mtcars %>% rbind(small_mtcars)
+```
+
+### append by column
+
+```{r}
+small_mtcars %>% cbind(small_mtcars)
+```
+
+### Sepcial vales
+
+#### NAN
+
+NaN (“Not a Number”) means 0/0
+
+```{r}
+v1 <- NaN
+v1
+```
+
+
+```{r}
+is.na(v1)
+```
+
+
+
+#### NA
+
+NA (“Not Available”) is generally interpreted as a missing value
+
+```{r}
+v2 <- NA
+v2
+```
+
+
+```{r}
+is.na(v2)
+```
+
+
+#### NULL
+
+NULL is an object and is returned when an expression or function results in an undefined value. In R language, NULL (capital letters) is a reserved word
+
+```{r}
+v3=NULL
+v3
+```
+
+```{r}
+is.na(v3)
+```
+
+
+## group by
+
+### average,min,max,sum
+
+```{r}
+small_mtcars %>%group_by(cyl) %>% summarise(avg_mpg=mean(mpg)
+                                            ,min_mpg=min(mpg)
+                                            ,max_mpg=max(mpg)
+                                            ,sum_mpg=sum(mpg))
+```
+
+### count record and count distinct record
+
+```{r}
+small_mtcars %>%group_by(cyl) %>% summarise(n_mpg=n()
+                                            ,distinct_n_mpg=n_distinct(mpg)
+                                            
+                                            )
+```
+
+## order rows
+
+```{r}
+small_mtcars %>%arrange(cyl) 
+```
+
+### Sort in descending order
+
+```{r}
+small_mtcars %>%arrange(desc(cyl) )
+```
+
+### Arrange by multiple variables
+
+```{r}
+small_mtcars %>%arrange(cyl,mpg)
+```
+
+## join
+
+```{r}
+left_data=small_mtcars %>% slice(1:2)
+right_data=small_mtcars %>% slice(2:4)
+```
+
+```{r}
+left_data
+```
+
+```{r}
+right_data
+```
+
+### inner_join
+
+```{r}
+data=left_data %>% inner_join(right_data,join_by(car_name== car_name), suffix = c("_l", "._r"))
+data
+```
+
+### left join
+
+```{r}
+data=left_data %>% left_join(right_data,join_by(car_name== car_name), suffix = c("_l", "._r"))
+data
+```
+
+### full join
+
+```{r}
+data=left_data %>% full_join(right_data,join_by(car_name== car_name), suffix = c("_l", "._r"))
+data
+```
+
+### anti join
+
+anti_join() return all rows from x without a match in y
+
+```{r}
+
+data=left_data %>% anti_join(right_data,join_by(car_name== car_name))
+data
+```
+
+## Reshape tables
+
+```{r}
+olddata_wide <- read.table(header=TRUE, text='
+ subject sex control cond1 cond2
+       1   M     7.9  12.3  10.7
+       2   F     6.3  10.6  11.1
+       3   F     9.5  13.1  13.8
+       4   M    11.5  13.4  12.9
+')
+```
+
+```{r}
+olddata_wide
+```
+
+### Gather data long(wide to long)
+
+```{r}
+data_long=olddata_wide %>%
+  pivot_longer(!c(subject,sex), names_to = 'income', values_to = 'DATA')
+
+data_long
+```
+
+### Spread data wide (long to wide)
+
+```{r}
+data_wide=data_long %>%
+  pivot_wider(names_from = income, values_from = DATA)
+
+data_wide
+```
+
+# string
+
+stringr is built on top of stringi, which uses the ICU C library to provide fast, correct implementations of common string manipulations.
+
+![](images/logo-01.png)
+
+## length
+
+```{r}
+x <- "I like horses."
+str_length(x)
+```
+
+## upper case
+
+```{r}
+x <- "I like horses."
+
+str_to_upper(x)
+```
+
+## lower case
+
+```{r}
+x <- "I like horses."
+
+str_to_lower(x)
+```
+
+## match
+
+```{r}
+word_list=c('abc','bbc','appale','bbaa','cc')
+```
+
+### match with 'a'
+
+```{r}
+word_list %>% str_detect('a')
+```
+
+### match with 'a' count
+
+```{r}
+word_list %>% str_count('a')
+```
+
+### index of vector match
+
+```{r}
+word_list %>% str_which('a')
+```
+
+### index of each word match (first match)
+
+```{r}
+word_list %>% str_locate('a')
+```
+
+### index of each word match (all match)
+
+```{r}
+word_list %>% str_locate_all('a')
+```
+
+```{r}
+
+trx='abc1993'
+
+num=str_match(trx, "(\\d)+")
+
+num
+
+```
+
+## concatenation
+
+```{r}
+a='aaaa'
+b='bbbb'
+```
+
+```{r}
+paste(a,b)
+```
+
+```{r}
+paste0(a,b)
+```
+
+## replace string
+
+### str_replace()
+
+```{r}
+text001="abcb"
+text001 %>% str_replace('b','1')
+```
+
+### str_replace_all()
+
+```{r}
+text001="abcb"
+text001 %>% str_replace_all('b','1')
+```
+
+### replace with regular expression
+
+
+```{r}
+word2=c('a-b','M6D5','M6D54','M6D55','M6D5') %>% as_tibble()
+word2
+```
+replace D+all number with '_'
+```{r}
+word2 %>% mutate(new=value %>% str_replace_all('D\\d*','_'))
+```
+
+
+
+## split string
+
+```{r}
+word=c('a-b','1-c','c-c')
+
+df_word=word %>% as.data.frame() %>% rename('word'='.')
+```
+
+### make 2 coloumn and split by `-` using stringr package
+
+```{r}
+df_word
+```
+
+```{r}
+library(stringr)
+df_word$word %>% str_split_fixed('-',2)
+```
+
+### make 2 coloumn and split by `-` using tidyr package
+
+```{r}
+df_word
+```
+
+```{r}
+library(tidyr)
+df_word %>% separate(word,c('col1','col2'),'-')
+```
+
+## subset element in list
+
+```{r}
+word=c('aabbbasdf','apple','pet','melon')
+```
+
+### word with 'a'
+
+```{r}
+word %>% str_subset('a')
+```
+
+### word with 'a,e,i,o,u'
+
+```{r}
+word %>% str_subset("[aeiou]")
+```
+
+### word with 'pet' or 'melon'
+
+```{r}
+word %>% str_subset('pet|melon')
+```
+
+### word with 'pet' or 'melon'
+
+```{r}
+word %>% str_subset('aa')
+```
+
+## extract string
+
+```{r}
+data001=mtcars
+data001 <- cbind(names = rownames(data001), data001)
+```
+
+### by postion
+
+extract 2 to 4
+
+```{r}
+data001$new_names=data001$names %>% str_sub(2,4)
+head(data001 %>% select(new_names,names))
+```
+
+### extracting with Regular expressions
+
+extracting one letter
+
+```{r}
+trx='abc1993 ccc'
+trx %>% str_extract("\\w")
+```
+
+extracting one letter/number
+
+```{r}
+trx='abc1993 ccc'
+trx %>% str_extract(".")
+```
+
+extracting one .
+
+```{r}
+trx='abc1993.ccc'
+trx %>% str_extract("\\.")
+```
+
+extracting 3 letter start with 'a'
+
+```{r}
+word=c('aabbbasdfe. e','appl.e e','pet','melon','asdf g 133asd') %>% as_tibble()
+word
+```
+
+extracting 2 letter start with 'a'
+
+```{r}
+word %>%mutate(new=value %>% str_extract("a.."))
+```
+
+extracting all letter start with 'a'
+
+```{r}
+word %>%mutate(new=value %>% str_extract("a.+"))
+```
+
+extracting all letter between 'a' and 'e'
+
+
+```{r}
+word %>%mutate(new=value %>% str_extract("(a).*?(e)"))
+```
+
+
+extracting all letter between 'a' and '.'
+
+
+
+```{r}
+word %>%mutate(new=value %>% str_extract("(a).*?(\\.)"))
+```
+
+extracting all letter between 'a' and space
+
+
+
+```{r}
+word %>%mutate(new=value %>% str_extract("(a).*?( )"))
+```
+
+extracting all letter end with number
+
+```{r}
+word %>%mutate(new=value %>% str_extract(".*?\\d")
+               , new2=new %>% str_sub(end=-3)
+                                         
+)
+```
+
+
+extracting one number
+
+```{r}
+trx='abc1993 ccc'
+trx %>% str_extract("\\d")
+```
+
+extracting more number
+
+```{r}
+trx='abc1993 ccc'
+trx %>% str_extract("(\\d)+")
+```
+
+extracting more non number
+
+```{r}
+trx='abc1993 ccc'
+trx %>% str_extract_all("\\D+")
+```
+
+
+extracting all letter from the begining
+
+```{r}
+trx='abc1993 ccc'
+trx %>% str_extract("[:alpha:]+")
+```
+
+extracting number after `points:`
+
+```{r}
+trx=c('abcpoints:100 ccc','asdfasd','points:66','thisis points:6')
+trx
+```
+
+extracting number after `points:` and remove non match
+
+```{r}
+t=trx %>% str_extract("points:[:digit:]+") %>% na.omit()%>% str_extract("points:[:digit:]+")
+t
+```
+
+
+## Regular expressions
+
+```{r}
+phones=c('abba','124','anna')
+phones
+
+```
+
+### get a+ (b or n) + (b or n) + a
+```{r}
+phones %>% str_view('a[bn][bn]a')
+```
+
+### bb or nn
+```{r}
+phones %>% str_view('(bb|nn)')
+```
+
+
+# date
+
+using lubridate package to handle date and time in R
+
+![](images/logo-02.png)
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(nycflights13)
+```
+
+## date format
+
+input as character
+
+```{r}
+date1='2023-01-01'
+class(date1)
+```
+
+```{r}
+date1
+```
+
+convert into date type with `as.Date()`
+
+```{r}
+date2=as.Date('2023-01-01')
+class(date2)
+```
+
+```{r}
+date2
+```
+
+convert into date type with `ymd()`
+
+```{r}
+date3=ymd('2023-01-01')
+class(date3)
+```
+
+```{r}
+date3
+```
+
+get today with `today()`
+
+```{r}
+today()
+```
+
+get local timezone
+
+```{r}
+Sys.timezone()
+```
+
+## change date format
+
+make multiple column character to date with `make_date()`
+
+```{r}
+flights %>% 
+  select(year, month, day, hour, minute) %>% 
+  mutate(departure = make_date(year, month, day))
+```
+
+```{r}
+flights %>% 
+  select(year, month, day, hour, minute) %>% 
+  mutate(departure = make_datetime(year, month, day, hour, minute))
+```
+
+## day differnce between two dates
+
+```{r}
+day1=ymd('2022-01-01')
+day2=ymd('2023-02-03')
+
+diff=day2-day1
+```
+
+```{r}
+diff
+```
+
+using `interval()` find two dates gap
+
+```{r}
+interval(day1,day2) %>% as.period()
+```
+
+find day gap
+
+```{r}
+interval(day1,day2)%/% days(1)
+```
+
+find month gap
+
+```{r}
+interval(day1,day2)%/% months(1)
+```
+
+find year gap
+
+```{r}
+interval(day1,day2)%/% years(1)
+```
+
+## day and time
+
+```{r}
+now_time=now()
+now_time
+```
+
+### get year
+
+```{r}
+year(now_time)
+```
+
+### get month
+
+```{r}
+month(now_time)
+```
+
+### get date of the month
+
+```{r}
+mday(now_time)
+```
+
+### get date of the year
+
+```{r}
+yday(now_time)
+```
+
+### get date of the week
+
+```{r}
+wday(now_time)
+```
+
+#### get hour
+
+```{r}
+hour(now_time)
+```
+
+### get minute
+
+```{r}
+minute(now_time)
+```
+
+### get second
+
+```{r}
+second(now_time)
+```
+
+## dataframe to other data format
+
+### dataframe to vector
+
+```{r}
+data=small_mtcars$cyl
+data
+```
+
+```{r}
+class(data)
+```
+
+### dataframe to matrix
+
+```{r}
+data=data.matrix(small_mtcars)
+data
+```
+
+```{r}
+class(data)
+```
+
+### dataframe to list
+
+```{r}
+data=as.list(small_mtcars)
+data
+```
+
+```{r}
+class(data)
+```
+
+# reference:
+
+https://dplyr.tidyverse.org/
+
+https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf
+
+https://www.youtube.com/watch?v=3Aki_sQYQG0
+
+https://www.r-bloggers.com/2018/07/r-null-values-null-na-nan-inf
+
+

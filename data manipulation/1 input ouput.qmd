@@ -1,0 +1,209 @@
+---
+title: "input & ouput in R"
+
+author: "Tony Duan"
+
+execute:
+  warning: false
+  error: false
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-fold: show
+    code-tools: true
+    number-sections: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9"
+---
+
+Data input and ouput in R
+
+![](images/1_-OQi5hp-uoL_KdIydr4hew.gif){width="500"}
+
+```{r}
+library(tidyverse)
+library(openxlsx)
+library(readxl)
+
+```
+
+
+# Input
+
+## read CSV
+
+```{r}
+data001=read_csv('data/Book3.csv')
+head(data001)
+```
+
+read CSV online
+
+```{r}
+url='https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-02-11/hotels.csv'
+data001=read_csv(url)
+head(data001)
+```
+
+## read excel
+
+```{r}
+library(openxlsx)
+library(readxl)
+
+data001=read_excel('data/Book1.xlsx')
+head(data001)
+```
+
+## read parquet
+
+must install in this way,otherwise will report error.
+```{r}
+#| eval: false
+install.packages("arrow", repos = c("https://apache.r-universe.dev"))
+```
+
+```{r}
+library(arrow)
+arrow_info()
+```
+
+```{r}
+data001=read_parquet('data/df.parquet')
+head(data001)
+```
+
+read parquet zip
+```{r}
+data001=read_parquet('data/df.parquet.gzip')
+head(data001)
+```
+
+
+
+## read feather
+
+```{r}
+library(feather)
+
+data001=read_feather('data/feather_file.feather')
+head(data001)
+
+```
+## read JSON file and convert into data frame
+
+```{r}
+library(jsonlite)
+data=read_json("./data/dataj.json")
+```
+
+```{r}
+data002=(data) %>% as.data.frame()
+```
+
+
+```{r}
+glimpse(data002)
+```
+
+## Getting Data from Images
+
+```{r}
+library(tesseract)
+```
+
+
+```{r}
+eng <- tesseract("eng")
+text001 <- tesseract::ocr("640.png", engine = eng)
+```
+
+
+```{r}
+cat(text001)
+```
+
+```{r}
+raw_tibble001 <- text001 %>% 
+  str_split(pattern = "\n") %>% 
+  unlist() %>%
+  tibble(data = .) %>% slice(6:n()) %>% filter(str_length(data) >= 2) %>%  mutate(old=data
+         ,data=data %>%str_replace_all('_','')%>%str_replace_all('—','')%>%str_replace_all("'",'')%>%str_replace_all('"','')
+         ) %>% separate(
+    data, 
+    into = c("one", "price"), 
+    sep = c("¥")
+    ) %>% mutate(
+    id = str_extract(one, "^\\S+ ")
+    ,name=gsub("^\\S+ ", "",one)
+  )
+
+
+glimpse(raw_tibble001)
+```
+
+
+
+
+
+# Output
+
+
+## write csv 
+
+```{r}
+
+write.csv(data001,'data001 csv output data.csv')
+```
+
+
+
+## write excel
+
+```{r}
+library(openxlsx)
+library(readxl)
+write.xlsx(data001,'data001 excel output data.xlsx')
+```
+
+
+
+## write parquet
+
+```{r}
+library(arrow)
+write_parquet(data001,'data/df.parquet')
+```
+
+
+output to zip format
+
+```{r}
+write_parquet(data001,'data/df.parquet.gzip',compression='gzip')  
+```
+
+
+## write feather
+
+
+
+```{r}
+library(feather)
+write_feather(data001,'data/feather_file.feather')
+
+```
+
+
+
+## write txt
+
+```{r}
+text=tibble('hello world
+its time!')
+
+write_delim(text, "text.txt")
+```
+
+
+

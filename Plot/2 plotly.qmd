@@ -1,0 +1,401 @@
+---
+title: "Plotly in R"
+author: "Tony Duan"
+
+execute:
+  warning: false
+  error: false
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-fold: show
+    code-tools: true
+    number-sections: true
+    code-block-bg: true
+    code-block-border-left: "#31BAE9"
+---
+
+![](images/Plotly-logo.png){width="800"}
+
+```{r}
+library(gapminder)
+library(plotly)
+packageVersion("plotly")
+```
+
+# Scatter Plot
+
+
+```{r}
+library(reshape2)
+tips=tips
+head(tips)
+```
+
+
+```{r}
+fig <- plot_ly(data = tips, x = ~total_bill, y = ~tip)
+fig
+```
+
+
+## color by group
+
+
+```{r}
+fig <- plot_ly(data = tips, x = ~total_bill, y = ~tip,color=~sex)
+fig
+```
+
+## size by group
+
+```{r}
+fig <- plot_ly(data = tips, x = ~total_bill, y = ~tip,color=~sex,size=~size)
+fig
+```
+
+## line Plot
+
+
+```{r}
+data001=gapminder
+data002= data001 %>% group_by(continent,year) %>% summarise(pop=sum(pop))
+```
+
+```{r}
+fig <- plot_ly(data = data002 %>%filter(continent=='Asia'), x = ~year, y = ~pop,mode = 'lines')
+fig
+```
+
+## line width and colour
+
+
+```{r}
+fig <- plot_ly(data = data002 %>%filter(continent=='Asia'), x = ~year, y = ~pop,mode = 'lines',line = list(color = 'rgb(205, 12, 24)', width = 8))
+fig
+```
+
+
+
+## color by group
+
+```{r}
+fig <- plot_ly(data = data002, x = ~year, y = ~pop,color = ~continent,mode = 'lines')
+fig
+```
+
+# histogram
+
+```{r}
+fig <- plot_ly(data=tips,x = ~total_bill, type = "histogram")
+
+fig
+```
+
+## set bin number
+
+```{r}
+fig <- plot_ly(data=tips,x = ~total_bill, type = "histogram",nbinsx = 5 )
+fig
+```
+
+
+
+## color by group
+
+```{r}
+fig <- plot_ly(data=tips,x = ~total_bill,color=~sex, type = "histogram")
+
+fig
+```
+
+
+
+# bar chart
+
+```{r}
+tips2=tips %>% group_by(sex) %>% summarise(total_bill=sum(total_bill))
+```
+
+
+```{r}
+fig <- plot_ly(data=tips2,x = ~sex,y=~total_bill,color=~sex, type = "bar")
+
+fig
+```
+
+## show number 
+
+```{r}
+fig <- plot_ly(data=tips2,x = ~sex,y=~total_bill,text=~total_bill, type = "bar")
+
+fig
+```
+
+## Horizontal Barplot
+
+```{r}
+fig <- plot_ly(data=tips2,y = ~sex,x=~total_bill,color=~sex, type = "bar",orientation = 'h')
+
+fig
+```
+
+
+## bar chart order
+
+```{r}
+fig <- plot_ly(data=tips2,x = ~sex,y=~total_bill,color=~sex, type = "bar")%>% 
+  layout(xaxis = list(categoryorder = "total ascending"))
+
+fig
+```
+
+
+```{r}
+fig <- plot_ly(data=tips2,x = ~sex,y=~total_bill,color=~sex, type = "bar")%>% 
+  layout(xaxis = list(categoryorder = "total descending"))
+
+fig
+```
+
+
+# box plot
+
+```{r}
+fig <- plot_ly(data=tips,y=~total_bill, type = "box")
+
+fig
+```
+
+## color by group
+
+```{r}
+fig <- plot_ly(data=tips,x = ~sex,y=~total_bill,color=~sex, type = "box")
+
+fig
+```
+
+# strip plot
+
+create ggplot and then covert to plotly
+
+```{r}
+p=ggplot(tips, aes(day,tip)) + geom_jitter(width = 0.1)
+ggplotly(p)
+```
+
+## color by group
+
+```{r}
+p=ggplot(tips, aes(day,tip,color=sex)) + geom_jitter(position=position_jitterdodge())
+ggplotly(p)
+```
+
+# Facet plot
+
+
+
+create ggplot and then covert to plotly
+
+
+```{r}
+p=ggplot(tips, aes(tip,total_bill,)) + geom_point(aes(color=sex)) + facet_wrap("day")
+
+ggplotly(p)
+```
+
+# title,size,x y name,footnote
+
+
+
+## add title
+
+```{r}
+fig <- plot_ly(data=tips,x = ~total_bill,color=~sex, type = "histogram") %>% layout(title = 'new title')
+
+fig
+```
+
+## adjust size
+
+```{r}
+fig <- plot_ly(data=tips,x = ~total_bill,color=~sex, type = "histogram"
+               ,width = 500, height = 200)
+
+fig
+```
+
+## change x y name
+
+```{r}
+fig <- plot_ly(data=tips,x = ~total_bill,color=~sex, type = "histogram") %>% layout(title = 'new title'
+                                                                                   ,xaxis = list(title = 'new x')
+                                                                                  ,yaxis = list(title = 'new y') 
+                                                                                    )
+
+fig
+```
+
+
+## change x y  axis range 
+
+
+```{r}
+fig <- plot_ly(data=tips,x = ~total_bill,color=~sex, type = "histogram") %>% layout(title = 'new title'
+                                                                                   ,xaxis = list(title = 'new x',range=c(20,40))
+                                                                                  ,yaxis = list(title = 'new y',range=c(20,40)) 
+                                                                                    )
+
+fig
+```
+
+
+## add footnote
+
+```{r}
+fig%>% layout(annotations = 
+                         list(x = 0, y = -0.1, 
+                              text = "this is footnote", 
+                              showarrow = F, 
+                              xref='paper', 
+                              yref='paper')
+    )
+```
+
+
+
+
+## legend
+
+### hide legend
+```{r}
+fig <- plot_ly(data = data002, x = ~year, y = ~pop,color = ~continent,mode = 'lines') %>% layout(showlegend = FALSE)
+fig
+```
+
+### show legend and change legend name
+```{r}
+fig <- plot_ly(data = data002 %>% filter(continent=='Asia'), x = ~year, y = ~pop,color = ~continent,mode = 'lines',name='Asia pop') %>% layout(showlegend = TRUE)
+fig
+```
+
+### change legend and change legend Position
+
+```{r}
+
+fig <- plot_ly(data = data002, x = ~year, y = ~pop,color = ~continent,mode = 'lines') %>% layout(legend = list(orientation = 'h'))
+
+fig
+```
+
+# add image
+
+add online image 
+```{r}
+
+fig <- plot_ly(data = data002, x = ~year, y = ~pop,color = ~continent,mode = 'lines') %>% layout(
+    images = list(  
+      list(  
+        source =  "https://raw.githubusercontent.com/cldougl/plot_images/add_r_img/vox.png"
+        ,xref = "paper"
+        ,yref = "paper" 
+        ,x = 0.1
+        ,y = 0.1
+        ,sizex = 0.1 
+        ,sizey = 0.1
+       ,xanchor="left"  
+      )  
+    )
+    ) 
+                                                                                           
+fig
+```
+
+
+
+add local image 
+```{r}
+
+fig <- plot_ly(data = data002, x = ~year, y = ~pop,color = ~continent,mode = 'lines') %>% layout(
+    images = list(  
+      list(  
+        source = base64enc::dataURI(file = "bee.png")
+        ,xref = "paper"
+        ,yref = "paper" 
+        ,x = 0.1
+        ,y = 0.1
+        ,sizex = 0.1 
+        ,sizey = 0.1
+       ,xanchor="left"  
+       # image at the back
+         ,layer = "below"
+       
+      )  
+    )
+    ) 
+                                                                                           
+fig
+```
+
+
+# applying themes
+
+
+create ggplot and then covert to plotly
+
+
+::: {.panel-tabset .nav-pills}
+
+
+## theme_bw()
+```{r}
+p=ggplot(tips, aes(tip, total_bill,color=sex)) + geom_point()+ scale_x_continuous(name="new x name")+ scale_y_continuous(name="new y name")
+
+ggplotly(p+ theme_bw())
+```
+
+## theme_light()
+
+```{r}
+ggplotly(p+ theme_light())
+```
+## theme_economist()
+
+```{r}
+library("ggthemes")
+ggplotly(p+ theme_economist())
+```
+
+:::
+
+
+
+
+# Save plot
+
+install orca in https://github.com/plotly/orca#installation
+
+conda install -c plotly plotly-orca
+```{r}
+#install.packages('processx')
+```
+
+```{r}
+#orca(p, "surface-plot.png")
+```
+
+
+
+# Animation plot
+
+```{r}
+fig <- plot_ly(data=gapminder,x = ~gdpPercap,y=~lifeExp,color=~continent, type = "scatter",frame = ~year,text = ~country)
+
+fig %>% animation_opts(
+    1000, easing = "elastic", redraw = FALSE
+  )
+```
+
+# reference:
+https://plotly.com/r/
